@@ -1,0 +1,8 @@
+Top down means visited nodes searching for unvisited neighbors
+Bottom up means unvisited nodes searching for visited neighbors
+Bottom up is only efficient when nodes have a significant number of edges
+Normally in BFS multiple parrent nodes will try and claim the second child node. This requires atomic operations. When doing a bottom up search the atomic operation is not necessary.
+If the graph is directed then the bottom up search requires an inverse of the graph representation doubling memory requirements
+The trick is when to transfer between modes.
+Use thresholds based on the number of edges to check going forward vs edges to check going backwards, as well as the number of nodes the forward search is processing (the frontier)
+So start going top down until critical mass of nodes acquired. Then go bottom up until until most are found. Then switch back to top down so unconnected nodes dont become a problem.
