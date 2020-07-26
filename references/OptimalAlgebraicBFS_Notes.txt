@@ -1,0 +1,8 @@
+Core concept is that if we represent the graph as a sparse [v, v] array, we can use matrix multiplication or binary and/or to calculate the the BFS at each iteration through the tree.
+connected_verts = AdjacencyMat * visited_verts
+More than that, the sparse array can be shrunk after each iteration to remove all nodes visited.
+This strategy of representing the search as a sparse matrix operation can simplify implementation because lots of work has been done to optimize computation and memory access for sparse linear algebra.
+Acording to the paper, this formulation of the search results in O(edges) computations which when parallelized results in O(t) time O(edges) work when using O(edges/t) processing units.
+
+For quick reference a parallizable version of the algorithm is represented in pseudocode in Algorithm 3 on page 13
+The paper does not discuss weighted graphs.
