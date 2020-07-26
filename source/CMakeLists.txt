@@ -1,7 +1,7 @@
 add_library(CudaLibrary
     library.cu
     library.cuh
-        error_checker.h)
+        error_checker.h book_bfs.cu book_bfs.cuh)
 target_include_directories(CudaLibrary
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>
