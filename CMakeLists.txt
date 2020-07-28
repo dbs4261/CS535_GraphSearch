@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.2)
-project(CS535_GraphSearch CXX CUDA)
+project(CS535_GraphSearch C CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CUDA_STANDARD 14)

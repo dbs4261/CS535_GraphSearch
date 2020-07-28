@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #define BUFFER 1024
 //initializes graph from file
 int** init_graph_adjacency(char* filename, int* num_nodes) 
@@ -117,11 +119,11 @@ void BFS_sequential(int source, int * edges, int *dest, int *label, int num_node
 		c_frontier_tail = 0;
 	}
 }
-int main(int argc, char** argv) 
-{
+int main(int argc, char** argv) {
+  assert(argc == 2);
 	int num_nodes, num_edges;
 	int* edges, *dest, *data;
-	int** graph = init_graph_adjacency("test.txt", &num_nodes);
+	int** graph = init_graph_adjacency(argv[1], &num_nodes);
 	num_edges = calc_num_edges(graph, num_nodes);
 	data = (int*)malloc(sizeof(int)*num_edges);
 	dest = (int*)malloc(sizeof(int)*num_edges);

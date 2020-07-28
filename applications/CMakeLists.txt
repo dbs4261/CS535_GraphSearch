@@ -4,3 +4,5 @@ target_link_libraries(Main
         CudaLibrary
         ${CUDA_LIBRARIES}
 )
+
+add_executable(SequentialBFS graph.c)
