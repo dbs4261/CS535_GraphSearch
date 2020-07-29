@@ -157,10 +157,10 @@ void create_random_simple_connected_graph(int num_nodes, int** graph, int max_da
 {
 	bool connected = false;
 	int* edges = (int*)malloc(sizeof(int) * (num_nodes + 1));
-	int* dest = malloc(sizeof(int) * num_nodes * num_nodes);
-	int* data = malloc(sizeof(int) * num_nodes * num_nodes);
+	int *dest = NULL;
+	int* data = NULL;
 	int num_edges = 0;
-	int *label = malloc(sizeof(int)*num_nodes);
+	int *label = (int*)malloc(sizeof(int)*num_nodes);
 	while(!connected)
 	{
 		int edge1 = rand() % num_nodes;
@@ -169,10 +169,14 @@ void create_random_simple_connected_graph(int num_nodes, int** graph, int max_da
 		if ((edge1 == edge2) || (graph[edge1][edge2] != 0)) 
 			continue;
 		connected_add_edge(graph, edge1, edge2, datapoint);
-		++num_edges;
+		num_edges += 2;
+		//Reallocate dest and data
+		dest = (int*)realloc(dest, sizeof(int) * num_edges);
+		data = (int*)realloc(data, sizeof(int) * num_edges);
 		//convert graph to csr
 		convert_graph_to_csr(graph, edges, dest, data, num_nodes, num_edges);
 		//Perform BFS on csr
+
 		BFS_sequential(0, edges, dest, label, num_nodes);
 		//Determine if graph is connected
 		connected = true;
