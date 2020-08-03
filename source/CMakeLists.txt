@@ -1,7 +1,15 @@
 add_library(CudaLibrary
     library.cu
     library.cuh
-        error_checker.h book_bfs.cu book_bfs.cuh)
+    error_checker.h
+    book_bfs.cu
+    book_bfs.cuh
+    sparse_matrix.hpp
+    graph.hpp
+    graph_utilities.hpp
+    bfs_sequential.hpp
+)
+
 target_include_directories(CudaLibrary
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>

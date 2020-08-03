@@ -3,14 +3,26 @@
 //
 
 #include <algorithm>
+#include <fstream>
 #include <vector>
 
 #include <cuda_runtime_api.h>
 
 #include "source/library.cuh"
 #include "source/error_checker.h"
+#include "source/graph_utilities.hpp"
+#include "source/bfs_sequential.hpp"
 
 int main(int argc, char** argv) {
+  Graph graph = RandomGraph(30, 25);
+  std::vector<int> distances = BFS_sequential(graph, 0);
+  {
+    std::ofstream dot_stream("test.dot");
+    graph.ConvertForDot(dot_stream, distances);
+    dot_stream.close();
+    std::cout << graph << std::endl;
+  }
+
   int n = 1000;
   std::vector<float> x_host(n);
   std::fill(x_host.begin(), x_host.end(), 1.0f);
