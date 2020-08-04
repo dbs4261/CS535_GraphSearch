@@ -5,6 +5,7 @@
 #ifndef CS535_GRAPHSEARCH_BFS_SEQUENTIAL_HPP
 #define CS535_GRAPHSEARCH_BFS_SEQUENTIAL_HPP
 
+#include <algorithm>
 #include <vector>
 
 #include "graph.hpp"

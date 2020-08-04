@@ -14,7 +14,7 @@
 #include "source/bfs_sequential.hpp"
 
 int main(int argc, char** argv) {
-  Graph graph = RandomGraph(30, 25);
+  Graph graph = RandomGraphWithDiameter(150, 1.2f, 0.5f);
   std::vector<int> distances = BFS_sequential(graph, 0);
   {
     std::ofstream dot_stream("test.dot");
