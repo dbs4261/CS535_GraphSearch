@@ -35,3 +35,12 @@ target_compile_options(CudaLibrary
         $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:-O0>>
         $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>>
 )
+
+if(OpenACC_CXX_FOUND)
+    message("Adding OpanACC support")
+    target_compile_definitions(CudaLibrary PUBLIC ENABLE_OPENACC)
+    target_sources(CudaLibrary
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/bfs_openacc.hpp
+        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/bfs_openacc.cpp)
+    set_source_files_properties(bfs_openacc.cpp PROPERTIES COMPILE_FLAGS ${OpenACC_CXX_FLAGS})
+endif()

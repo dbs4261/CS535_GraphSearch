@@ -12,6 +12,9 @@
 #include "source/error_checker.h"
 #include "source/graphs/graph_utilities.hpp"
 #include "source/bfs_sequential.hpp"
+#ifdef ENABLE_OPENACC
+#include "source/bfs_openacc.hpp"
+#endif
 
 int main(int argc, char** argv) {
   Graph graph = RandomGraphWithDiameter(150, 1.2f, 0.5f);
@@ -22,6 +25,10 @@ int main(int argc, char** argv) {
     dot_stream.close();
     std::cout << graph << std::endl;
   }
+  #ifdef ENABLE_OPENACC
+  std::vector<int> openacc_distances = BFS_OpenACC(graph, 0);
+  std::equal(distances.begin(), distances.end(), openacc_distances.begin());
+  #endif
 
   int n = 1000;
   std::vector<float> x_host(n);
