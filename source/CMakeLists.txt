@@ -1,13 +1,19 @@
 add_library(CudaLibrary
-    library.cu
-    library.cuh
-    error_checker.h
-    book_bfs.cu
-    book_bfs.cuh
-    sparse_matrix.hpp
-    graph.hpp
-    graph_utilities.hpp
-    bfs_sequential.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/library.cu
+    ${CMAKE_CURRENT_LIST_DIR}/library.cuh
+    ${CMAKE_CURRENT_LIST_DIR}/error_checker.h
+    ${CMAKE_CURRENT_LIST_DIR}/book_bfs.cu
+    ${CMAKE_CURRENT_LIST_DIR}/book_bfs.cuh
+    ${CMAKE_CURRENT_LIST_DIR}/bfs_sequential.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/bfs_sequential.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/sparse_matrix.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/sparse_matrix.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/graph.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/graph.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/graph_utilities.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/graph_utilities.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.cpp
 )
 
 target_include_directories(CudaLibrary

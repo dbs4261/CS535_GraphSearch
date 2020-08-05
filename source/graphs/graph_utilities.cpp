@@ -1,16 +1,11 @@
 //
-// Created by Daniel Simon on 8/2/20.
+// Created by Daniel Simon on 8/5/20.
 //
 
-#ifndef CS535_GRAPHSEARCH_GRAPH_UTILITIES_HPP
-#define CS535_GRAPHSEARCH_GRAPH_UTILITIES_HPP
+#include "graph_utilities.hpp"
 
 #include <cassert>
 #include <random>
-#include <utility>
-#include <vector>
-
-#include "graph.hpp"
 
 Graph RandomGraph(std::size_t num_nodes, std::size_t num_edges) {
   static std::random_device random_device;
@@ -48,5 +43,3 @@ Graph RandomGraphWithDiameter(std::size_t num_nodes, float average_numer_of_edge
   assert(not graph.Resize(num_nodes));
   return graph;
 }
-
-#endif //CS535_GRAPHSEARCH_GRAPH_UTILITIES_HPP

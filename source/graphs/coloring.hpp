@@ -12,18 +12,7 @@ static constexpr std::array<float, 2> kGreenVec2 {4.27729857, 2.82956604};
 static constexpr std::array<float, 2> kBlueVec2 = {-89.90310912, 27.34824973};
 }
 
-std::array<float, 3> TurboColorFloat(float value) {
-  std::array<float, 4> vec4 = {1.0f, value, value * value, value * value * value};
-  std::array<float, 2> vec2 =  {vec4[2] * vec4[2], vec4[2] * vec4[3]};
-  return {
-      std::inner_product(vec4.begin(), vec4.end(), turbo::kRedVec4.begin(), 0.0f) +
-          std::inner_product(vec2.begin(), vec2.end(), turbo::kRedVec2.begin(), 0.0f),
-      std::inner_product(vec4.begin(), vec4.end(), turbo::kGreenVec4.begin(), 0.0f) +
-          std::inner_product(vec2.begin(), vec2.end(), turbo::kGreenVec2.begin(), 0.0f),
-      std::inner_product(vec4.begin(), vec4.end(), turbo::kBlueVec4.begin(), 0.0f) +
-          std::inner_product(vec2.begin(), vec2.end(), turbo::kBlueVec2.begin(), 0.0f)
-  };
-}
+std::array<float, 3> TurboColorFloat(float value);
 
 std::array<char[8], 10> brewer_spectral {"#9e0142", "#d52e4f", "#f46d43", "#fdae61", "#fee08b", "#e6f598", "#abdda4", "#66c2a5", "#3288bd", "#5e4fa2"};
 

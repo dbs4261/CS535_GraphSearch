@@ -10,7 +10,7 @@
 
 #include "source/library.cuh"
 #include "source/error_checker.h"
-#include "source/graph_utilities.hpp"
+#include "source/graphs/graph_utilities.hpp"
 #include "source/bfs_sequential.hpp"
 
 int main(int argc, char** argv) {
