@@ -3,7 +3,9 @@
 //
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 #include <cuda_runtime_api.h>
@@ -15,6 +17,9 @@
 #ifdef ENABLE_OPENACC
 #include "source/bfs_openacc.hpp"
 #endif
+#ifdef ENABLE_PARALLEL_STL
+#include "source/bfs_parallel_stl.hpp"
+#endif
 
 int main(int argc, char** argv) {
   Graph graph = RandomGraphWithDiameter(150, 1.2f, 0.5f);
@@ -25,9 +30,17 @@ int main(int argc, char** argv) {
     dot_stream.close();
     std::cout << graph << std::endl;
   }
+
   #ifdef ENABLE_OPENACC
   std::vector<int> openacc_distances = BFS_OpenACC(graph, 0);
-  std::equal(distances.begin(), distances.end(), openacc_distances.begin());
+  assert(std::equal(distances.begin(), distances.end(), openacc_distances.begin()));
+  std::cout << "Finished OpenACC BFS" << std::endl;
+  #endif
+
+  #ifdef ENABLE_PARALLEL_STL
+  std::vector<int> parallel_stl_distances = BFS_ParallelSTL(graph, 0);
+  assert(std::equal(distances.begin(), distances.end(), openacc_distances.begin()));
+  std::cout << "Finished ParallelSTL BFS" << std::endl;
   #endif
 
   int n = 1000;

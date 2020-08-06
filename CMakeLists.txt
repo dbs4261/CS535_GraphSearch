@@ -18,5 +18,9 @@ else()
   message("Did not find openacc...")
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
+  message("Using PGI compiler")
+endif()
+
 add_subdirectory(source)
 add_subdirectory(applications)
