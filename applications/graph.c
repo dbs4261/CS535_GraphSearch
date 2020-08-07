@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
-
+#include <cuda.h>
 #define BUFFER 1024
 //initializes graph from file
 int** init_graph_adjacency(char* filename, int* num_nodes) 
@@ -192,35 +192,4 @@ void create_random_simple_connected_graph(int num_nodes, int** graph, int max_da
 	free(data);
 	free(label);
 }
-//First argument in argv is number of nodes
-//Second argument is filename to save graph in
-int main(int argc, char** argv) {
-  assert(argc == 3);
-  	srand(time(NULL));
-	int num_nodes, num_edges;
-	int* edges, *dest, *data;
-//	int** graph = init_graph_adjacency(argv[1], &num_nodes);
-	num_nodes = atoi(argv[1]);
-	int** graph = init_zero_graph(num_nodes);
-	create_random_simple_connected_graph(num_nodes, graph, 100);
-	num_edges = calc_num_edges(graph, num_nodes);
-	data = (int*)malloc(sizeof(int)*num_edges);
-	dest = (int*)malloc(sizeof(int)*num_edges);
-	edges = (int*)malloc(sizeof(int)*(num_nodes + 1));
-	print_graph(graph, num_nodes);
-	convert_graph_to_csr(graph, edges, dest, data, num_nodes, num_edges);
-	print_csr(edges, dest, data, num_nodes, num_edges);
-	int* label = malloc(sizeof(int)*num_nodes);
-	BFS_sequential(0, edges, dest, label, num_nodes);
-	print_label(0, label, num_nodes);
-	print_graph_to_file(graph, num_nodes, argv[2]);
-	for(int i = 0; i < num_nodes; ++i)
-		free(graph[i]);
-	free(graph);
-	free(data);
-	free(dest);
-	free(edges);
-	free(label);
-	return 0;
-	
-}
+
