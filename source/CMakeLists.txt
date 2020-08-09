@@ -58,3 +58,21 @@ endif()
 #    )
 #    set_source_files_properties(bfs_parallel_stl.cpp PROPERTIES COMPILE_FLAGS -stdpar)
 #endif()
+
+add_executable(YubinBFS origin_bfs.cu)
+target_include_directories(YubinBFS
+    PUBLIC
+        ${CUDA_INCLUDE_DIRS}
+)
+target_compile_options(YubinBFS
+    PUBLIC
+        $<$<COMPILE_LANGUAGE:CUDA>:-arch=${CUDA_COMPILED_ARCH}>
+        $<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>
+        $<$<COMPILE_LANGUAGE:CUDA>:--default-stream per-thread>
+        $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:-g>>
+        $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:-G>>
+        $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:-O0>>
+        $<$<CONFIG:DEBUG>:$<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-v>>
+)
