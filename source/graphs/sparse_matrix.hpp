@@ -9,7 +9,7 @@
 #include <ostream>
 
 struct BinarySquareSparseMatrix {
-  using index_type = std::size_t;
+  using index_type = int;
   BinarySquareSparseMatrix() : column_indices(), row_indices(2, 0) {}
 
   [[nodiscard]] bool Contains(index_type x, index_type y) const;
