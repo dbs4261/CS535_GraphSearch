@@ -1,6 +1,4 @@
-add_library(CudaLibrary
-    ${CMAKE_CURRENT_LIST_DIR}/library.cu
-    ${CMAKE_CURRENT_LIST_DIR}/library.cuh
+add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/error_checker.h
     ${CMAKE_CURRENT_LIST_DIR}/book_bfs.cu
     ${CMAKE_CURRENT_LIST_DIR}/book_bfs.cuh
@@ -16,14 +14,14 @@ add_library(CudaLibrary
     ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.cpp
 )
 
-target_include_directories(CudaLibrary
+target_include_directories(BFSLibrary
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>
     INTERFACE
         ${CUDA_INCLUDE_DIRS}
 )
 
-target_compile_options(CudaLibrary
+target_compile_options(BFSLibrary
     PUBLIC
         $<$<COMPILE_LANGUAGE:CUDA>:-arch=${CUDA_COMPILED_ARCH}>
         $<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>
