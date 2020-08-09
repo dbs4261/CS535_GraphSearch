@@ -4,7 +4,6 @@
 #include <time.h>
 #include <math.h>
 
-#define MAX_FRONTIER_SIZE 16
 #define BLOCK_QUEUE_SIZE 16
 #define BLOCK_SIZE 8.0
 
@@ -17,6 +16,7 @@
 //}
 
 #include "error_checker.h"
+#include "allocate_for_cuda_bfs.h"
 
 __global__ void frontier_init_kernel(int* p_frontier_tail_d, int* c_frontier_tail_d, int* p_frontier_d, int* visited_d, int* label_d, int source) {
   visited_d[source] = 1;
@@ -75,49 +75,22 @@ __global__ void BFS_Bqueue_kernel(int* p_frontier, int* p_frontier_tail, int* c_
 }
 
 void BFS_host(int source, int *edges, int *dest, int *label, int edges_num, int vertex_num){
-
   int *edges_d, *dest_d, *label_d, *visited_d;
+  int *c_frontier_d, *p_frontier_d, *c_frontier_tail_d, *p_frontier_tail_d;
 
-  CudaCatchError(cudaMallocManaged((void**)&edges_d, (vertex_num + 1) * sizeof(int)));
-  CudaCatchError(cudaMallocManaged((void**)&dest_d, edges_num * sizeof(int)));
-  CudaCatchError(cudaMallocManaged((void**)&label_d, vertex_num * sizeof(int)));
-  CudaCatchError(cudaMallocManaged((void**)&visited_d, vertex_num * sizeof(int)));
+  AllocateAndCopyFor_device_BFS(vertex_num, edges_num, source, edges, dest, &edges_d, &dest_d, &label_d, &visited_d, &c_frontier_d, &c_frontier_tail_d, &p_frontier_d, &p_frontier_tail_d);
 
-  CudaCatchError(cudaMemcpy(edges_d, edges, (vertex_num + 1) * sizeof(int), cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMemcpy(dest_d, dest, edges_num * sizeof(int), cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMemcpy(label_d, label, vertex_num * sizeof(int), cudaMemcpyHostToDevice));
-
-  int *frontier_d, *c_frontier_tail_d, *p_frontier_tail_d;
-  CudaCatchError(cudaMallocManaged((void**)&frontier_d, 2 * MAX_FRONTIER_SIZE * sizeof(int)));
-  CudaCatchError(cudaMallocManaged((void**)&c_frontier_tail_d, sizeof(int)));
-  CudaCatchError(cudaMallocManaged((void**)&p_frontier_tail_d, sizeof(int)));
-  int *c_frontier_d = frontier_d;
-  int *p_frontier_d = frontier_d + MAX_FRONTIER_SIZE;
-
-  CudaCatchError(cudaMemset(visited_d, 0, vertex_num * sizeof(int)));
-  printf("1\n");
-  CudaCatchError(cudaGetLastError());
-  frontier_init_kernel <<< 1,1 >>>(p_frontier_tail_d, c_frontier_tail_d, p_frontier_d, visited_d, label_d, source);
-  CudaCatchError(cudaGetLastError());
   int p_frontier_tail = 1;
-  printf("2\n");
   while (p_frontier_tail > 0) {
     int num_blocks = ceil(p_frontier_tail / BLOCK_SIZE);
     BFS_Bqueue_kernel <<< num_blocks, BLOCK_SIZE >>> (p_frontier_d, p_frontier_tail_d, c_frontier_d, c_frontier_tail_d, edges_d, dest_d, label_d, visited_d);
     CudaCatchError(cudaGetLastError());
     CudaCatchError(cudaMemcpy(&p_frontier_tail, c_frontier_tail_d, sizeof(int), cudaMemcpyDeviceToHost));
     int *temp = c_frontier_d; c_frontier_d = p_frontier_d; p_frontier_d = temp;
-    printf("3\n");
     frontier_tail_swap_kernel <<< 1,1 >>>(p_frontier_tail_d, c_frontier_tail_d);
     CudaCatchError(cudaGetLastError());
-    printf("4\n");
   }
-  cudaMemcpy(label, label_d, vertex_num * sizeof(int), cudaMemcpyDeviceToHost);
-
-  cudaFree(edges_d);
-  cudaFree(dest_d);
-  cudaFree(label_d);
-  cudaFree(visited_d);
+  DeallocateFrom_device_BFS(vertex_num, label, edges_d, dest_d, label_d, visited_d, c_frontier_d, c_frontier_tail_d, p_frontier_d, p_frontier_tail_d);
 }
 
 
@@ -139,7 +112,7 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < 9; i++) {
 	printf("%d ", label[i]);
   }
-  return 1;
+  return EXIT_SUCCESS;
 }
 
 

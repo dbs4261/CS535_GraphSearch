@@ -18,12 +18,13 @@ add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/cuda_unified_bfs.h
     ${CMAKE_CURRENT_LIST_DIR}/graph.c
     ${CMAKE_CURRENT_LIST_DIR}/graph.h
+    ${CMAKE_CURRENT_LIST_DIR}/allocate_for_cuda_bfs.c
+    ${CMAKE_CURRENT_LIST_DIR}/allocate_for_cuda_bfs.h
 )
 
 target_include_directories(BFSLibrary
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../>
-    INTERFACE
         ${CUDA_INCLUDE_DIRS}
 )
 
@@ -59,7 +60,7 @@ endif()
 #    set_source_files_properties(bfs_parallel_stl.cpp PROPERTIES COMPILE_FLAGS -stdpar)
 #endif()
 
-add_executable(YubinBFS origin_bfs.cu)
+add_executable(YubinBFS origin_bfs.cu allocate_for_cuda_bfs.c)
 target_include_directories(YubinBFS
     PUBLIC
         ${CUDA_INCLUDE_DIRS}
