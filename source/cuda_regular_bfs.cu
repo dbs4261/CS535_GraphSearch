@@ -3,7 +3,7 @@
 //
 
 #include <cuda.h>
-#include "graph.c"
+#include "../applications/graph.c"
 #include <stdlib.h>
 __global__ void device_BFS(int source, int* edges, int* dest, int* label, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier)
 {

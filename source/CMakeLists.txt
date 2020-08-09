@@ -12,6 +12,10 @@ add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/graphs/graph_utilities.cpp
     ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.hpp
     ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cuda_regular_bfs.cu
+    ${CMAKE_CURRENT_LIST_DIR}/cuda_regular_bfs.h
+    ${CMAKE_CURRENT_LIST_DIR}/cuda_unified_bfs.cu
+    ${CMAKE_CURRENT_LIST_DIR}/cuda_unified_bfs.h
 )
 
 target_include_directories(BFSLibrary
