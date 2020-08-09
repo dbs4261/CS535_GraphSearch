@@ -26,32 +26,32 @@ __global__ void device_BFS(const int* edges, const int* dests, int* labels, int*
 void AllocateAndCopyFor_device_BFS(int num_nodes, int num_edges, int source, const int* host_edges,
     const int* host_dests, int** device_edges, int** device_dests, int** device_label, int** device_visited,
     int** current_frontier, int** current_frontier_tail, int** previous_frontier, int** previous_frontier_tail) {
-  CudaCatchError(cudaMallocManaged(device_edges, sizeof(int) * (num_nodes + 1)));
+  CudaCatchError(cudaMalloc(device_edges, sizeof(int) * (num_nodes + 1)));
   CudaCatchError(cudaMemcpy(*device_edges, host_edges, sizeof(int) * (num_nodes + 1), cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMallocManaged(device_dests, sizeof(int) * num_edges));
+  CudaCatchError(cudaMalloc(device_dests, sizeof(int) * num_edges));
   CudaCatchError(cudaMemcpy(*device_dests, host_dests, sizeof(int) * num_edges, cudaMemcpyHostToDevice));
   int* temp = (int*)malloc(sizeof(int) * num_nodes);
-  CudaCatchError(cudaMallocManaged(device_label, sizeof(int) * num_nodes));
+  CudaCatchError(cudaMalloc(device_label, sizeof(int) * num_nodes));
   for (int i = 0; i < num_nodes; i++) {
     temp[i] = -1;
   }
   temp[source] = 0;
   CudaCatchError(cudaMemcpy(*device_label, temp, sizeof(int) * num_nodes, cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMallocManaged(device_visited, sizeof(int) * num_nodes));
+  CudaCatchError(cudaMalloc(device_visited, sizeof(int) * num_nodes));
   for (int i = 0; i < num_nodes; i++) {
     temp[i] = 0;
   }
   temp[source] = 1;
   CudaCatchError(cudaMemcpy(*device_visited, temp, sizeof(int) * num_nodes, cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMallocManaged(previous_frontier, sizeof(int) * num_nodes));
+  CudaCatchError(cudaMalloc(previous_frontier, sizeof(int) * num_nodes));
   temp[0] = source;
   CudaCatchError(cudaMemcpy(*previous_frontier, temp, sizeof(int), cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMallocManaged(current_frontier, sizeof(int) * num_nodes));
+  CudaCatchError(cudaMalloc(current_frontier, sizeof(int) * num_nodes));
   temp[0] = 1;
   temp[1] = 0;
-  CudaCatchError(cudaMallocManaged(previous_frontier_tail, sizeof(int)));
+  CudaCatchError(cudaMalloc(previous_frontier_tail, sizeof(int)));
   CudaCatchError(cudaMemcpy(*previous_frontier_tail, temp, sizeof(int), cudaMemcpyHostToDevice));
-  CudaCatchError(cudaMallocManaged(current_frontier_tail, sizeof(int)));
+  CudaCatchError(cudaMalloc(current_frontier_tail, sizeof(int)));
   CudaCatchError(cudaMemcpy(*current_frontier_tail, temp + 1, sizeof(int), cudaMemcpyHostToDevice));
   free(temp);
 }
