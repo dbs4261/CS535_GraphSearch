@@ -16,6 +16,8 @@ add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/cuda_regular_bfs.h
     ${CMAKE_CURRENT_LIST_DIR}/cuda_unified_bfs.cu
     ${CMAKE_CURRENT_LIST_DIR}/cuda_unified_bfs.h
+    ${CMAKE_CURRENT_LIST_DIR}/graph.c
+    ${CMAKE_CURRENT_LIST_DIR}/graph.h
 )
 
 target_include_directories(BFSLibrary

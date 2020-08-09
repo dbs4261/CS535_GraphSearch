@@ -3,7 +3,7 @@
 //
 
 #include <cuda.h>
-#include "../applications/graph.c"
+#include "graph.c"
 
 __global__ void BFS_UNIFIED(int source, int* edges, int* dest, int* label, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier)
 {
@@ -24,6 +24,8 @@ __global__ void BFS_UNIFIED(int source, int* edges, int* dest, int* label, int* 
 	
 	}	
 }
+
+void LaunchBFS_UNIFIED();
 
 int main(int argc, char** argv)
 {

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
-#include <cuda.h>
+
 #define BUFFER 1024
 //initializes graph from file
 int** init_graph_adjacency(char* filename, int* num_nodes) 
@@ -153,8 +153,7 @@ void connected_add_edge(int** graph, int vertex1, int vertex2, int data)
 //randomly adds edges until graph is connected
 //Assumes graph is initialized with a 0 adjacency matrix
 //Since the graph stops making edges once it is connected this will tend to make a sparse graph
-void create_random_simple_connected_graph(int num_nodes, int** graph, int max_data)
-{
+void create_random_simple_connected_graph(int num_nodes, int** graph, int max_data) {
 	bool connected = false;
 	int* edges = (int*)malloc(sizeof(int) * (num_nodes + 1));
 	int *dest = NULL;
