@@ -22,7 +22,7 @@
 #endif
 
 int main(int argc, char** argv) {
-  Graph graph = RandomGraphWithDiameter(150, 1.2f, 0.5f);
+  Graph graph = RandomGraphWithDiameter(20, 1.2f, 0.5f);
   std::vector<int> distances = BFS_sequential(graph, 0);
   {
     std::ofstream dot_stream("test.dot");
