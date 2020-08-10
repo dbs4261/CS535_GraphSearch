@@ -10,9 +10,9 @@
 #include "error_checker.h"
 
 __global__ void device_BFS(const int* edges, const int* dests, int* labels, int* visited, int* c_frontier_tail, int* c_frontier, int* p_frontier_tail, int* p_frontier) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	if (i < *p_frontier_tail) {
-		int c_vertex = p_frontier[i];
+	int index = blockIdx.x * blockDim.x + threadIdx.x;
+	if (index < *p_frontier_tail) {
+		int c_vertex = p_frontier[index];
 		for (int i = edges[c_vertex]; i < edges[c_vertex+1]; i++) {
 			int was_visited = atomicExch(visited + dests[i], 1);
 			if (!was_visited) {
@@ -24,7 +24,7 @@ __global__ void device_BFS(const int* edges, const int* dests, int* labels, int*
 	}	
 }
 
-void Launch_device_BFS(int num_nodes, int* edges, int* dests, int* labels, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier) {
+extern "C" void Launch_device_BFS(int num_nodes, int* edges, int* dests, int* labels, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier) {
   unsigned int block_size = 32;
   unsigned int grid_size = ceil(num_nodes/(float)block_size);
   int frontier_size = 1;
@@ -43,6 +43,24 @@ void Launch_device_BFS(int num_nodes, int* edges, int* dests, int* labels, int* 
     CudaCatchError(cudaMemcpy(c_frontier_tail, &frontier_size, sizeof(int), cudaMemcpyHostToDevice));
     CudaCatchError(cudaMemcpy(&frontier_size, p_frontier_tail, sizeof(int), cudaMemcpyDeviceToHost));
   }
+  CudaCatchError(cudaDeviceSynchronize());
+}
+
+extern "C" void Launch_unified_BFS(int num_nodes, int* edges, int* dests, int* labels, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier) {
+  unsigned int block_size = 32;
+  unsigned int grid_size = ceil(num_nodes/(float)block_size);
+  int* pointer_swap = nullptr;
+  while (*p_frontier_tail > 0) {
+    device_BFS<<<grid_size, block_size>>>(edges, dests, labels, visited, c_frontier_tail, c_frontier, p_frontier_tail, p_frontier);
+    CudaCatchError(cudaGetLastError());
+    CudaCatchError(cudaDeviceSynchronize());
+    pointer_swap = p_frontier;
+    p_frontier = c_frontier;
+    c_frontier = pointer_swap;
+    *p_frontier_tail = *c_frontier_tail;
+    *c_frontier_tail = 0;
+  }
+  CudaCatchError(cudaDeviceSynchronize());
 }
 
 extern "C" void Run_device_BFS(int num_nodes, int num_edges, int source, int* host_edges, int* host_dests, int* host_labels) {

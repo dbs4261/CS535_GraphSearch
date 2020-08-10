@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 project(CS535_GraphSearch C CXX CUDA)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CUDA_STANDARD 14)
 
 set(CUDA_COMPILED_ARCH "sm_50")

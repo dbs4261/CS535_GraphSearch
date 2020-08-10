@@ -1,5 +1,6 @@
 #include <cuda.h>
 #include "../source/graph.c"
+
 __global__ void BFS_UNIFIED(int source, int* edges, int* dest, int* label, int* visited, int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier)
 {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
