@@ -9,6 +9,33 @@
 #include <type_traits>
 #include <ostream>
 
+#include <cuda_runtime_api.h>
+
+#include "source/error_checker.h"
+
+struct RaiiCudaTimer {
+ protected:
+  cudaEvent_t start_event;
+  cudaEvent_t end_event;
+  cudaStream_t stream;
+  std::chrono::duration<float, std::milli>& elapsed;
+ public:
+  RaiiCudaTimer(std::chrono::duration<float, std::milli>& elapsed_target, cudaStream_t stream=nullptr) : elapsed(elapsed_target), stream(stream) {
+    CudaCatchError(cudaEventCreate(&start_event));
+    CudaCatchError(cudaEventCreate(&end_event));
+    CudaCatchError(cudaEventRecord(start_event, stream));
+  }
+  ~RaiiCudaTimer() {
+    CudaCatchError(cudaEventRecord(end_event, stream));
+    CudaCatchError(cudaStreamSynchronize(stream));
+    float temp;
+    CudaCatchError(cudaEventElapsedTime(&temp, start_event, end_event));
+    elapsed = std::chrono::duration<float, std::milli>(temp);
+    CudaCatchError(cudaEventDestroy(start_event));
+    CudaCatchError(cudaEventDestroy(end_event));
+  }
+};
+
 struct RaiiTimer {
  protected:
   std::chrono::high_resolution_clock::time_point start;
@@ -27,7 +54,7 @@ struct TimingWrapper {
 
   template <typename Function, typename ... Args>
   std::invoke_result_t<Function, Args...> Run(Function function, Args&& ... args) {
-    RaiiTimer timer(elapsed);
+    RaiiCudaTimer timer(elapsed);
     return function(std::forward<Args>(args)...);
   }
 
