@@ -59,31 +59,40 @@ CudaTimers TimeUnifiedBFS(const Graph& graph, Graph::index_type source, std::vec
 }
 
 int main(int argc, char** argv) {
-  std::size_t graph_size = 300;
+  std::size_t graph_size = 500000;
   float average_diameter = 1.2f;
   float diameter_deviation = 0.5f;
+  std::cout << "Generating graph" << std::endl;
   Graph graph = RandomGraphWithDiameter(graph_size, average_diameter, diameter_deviation);
   Graph::index_type source = 0;
+  std::cout << "Running Sequential BFS" << std::endl;
   TimingWrapper cpu_timer{};
   std::vector<int> distances = cpu_timer.Run(BFS_sequential, graph, source);
   {
+    std::cout << "Writing dot file" << std::endl;
     std::ofstream dot_stream("test.dot");
     graph.ConvertForDot(dot_stream, distances);
     dot_stream.close();
-    std::cout << graph << std::endl;
+    if (graph_size <= 200) {
+      std::cout << graph << std::endl;
+    } else {
+      std::cout << "Graph is too big to print (size: " << graph_size << ")" << std::endl;
+    }
   }
 
   #ifdef ENABLE_OPENACC
+  std::cout << "Running OpenACC BFS" << std::endl;
   TimingWrapper openacc_timer{};
   std::vector<int> openacc_distances = openacc_timer.Run(BFS_OpenACC, graph, source);
   assert(std::equal(distances.begin(), distances.end(), openacc_distances.begin()));
-  std::cout << "Finished OpenACC BFS" << std::endl;
   #endif
 
+  std::cout << "Running Cuda BFS" << std::endl;
   std::vector<int> gpu_bfs_distances(graph.NumNodes());
   CudaTimers regular_bfs_times = TimeDeviceBFS(graph, source, gpu_bfs_distances);
   assert(std::equal(distances.begin(), distances.end(), gpu_bfs_distances.begin()));
 
+  std::cout << "Running Unified Memory BFS" << std::endl;
   std::vector<int> unified_bfs_distances(graph.NumNodes());
   CudaTimers unified_bfs_times = TimeUnifiedBFS(graph, source, unified_bfs_distances);
   assert(std::equal(distances.begin(), distances.end(), unified_bfs_distances.begin()));

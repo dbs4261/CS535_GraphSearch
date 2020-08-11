@@ -26,7 +26,7 @@ std::vector<int> BFS_OpenACC(const Graph& graph, Graph::index_type source) {
   #pragma acc data copyin(row_indices[:num_nodes], column_indices[:num_nodes]) \
         copy(distances_alias[:num_nodes], previous_frontier[:num_nodes]), create(current_frontier[:num_nodes])
   for (int k = 1; previous_frontier_size > 0; k++) {
-//    #pragma acc kernel
+    #pragma acc kernel device_type(nvidia)
     for (const Graph::index_type* row_ptr = previous_frontier;
          row_ptr < previous_frontier + previous_frontier_size; row_ptr++) {
       for (const Graph::index_type* col_ptr = column_indices + row_indices[*row_ptr];
