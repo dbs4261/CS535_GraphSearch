@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -108,27 +109,105 @@ CudaTimers TimeWarpQueueBFS(std::size_t iterations, const Graph& graph, Graph::i
   return average;
 }
 
-int main(int argc, char** argv) {
-  std::size_t graph_size = 20;
-  std::size_t iterations = 25;
-  float average_diameter = 2.0f;
-  float diameter_deviation = 1.0f;
+struct TimingResults {
+  std::size_t graph_size;
+  float average_diameter;
+  TimingWrapper average_cpu_timer;
+  TimingWrapper average_parallel_cpu_timer;
+  TimingWrapper average_openacc_timer;
+  CudaTimers average_regular_bfs_times;
+  CudaTimers average_unified_bfs_times;
+  CudaTimers average_warpqueue_times;
+
+  static void Header(std::ostream& os) {
+    os << "Graph Size, Average Diameter, Average Sequential Cpu Time (ms), "
+       << "Average Threaded CPU Time (ms), Average OpenACC Time (ms), Average Cuda Time (ms), "
+       << "Average Unified Memory Time (ms), Average Warp Queue Time (ms)\n";
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const TimingResults& results) {
+    os << results.graph_size << ", ";
+    os << results.average_diameter << ", ";
+    os << results.average_cpu_timer << ", ";
+    os << results.average_parallel_cpu_timer << ", ";
+    os << results.average_openacc_timer << ", ";
+    os << results.average_regular_bfs_times.Total() << ", ";
+    os << results.average_unified_bfs_times.Total() << ", ";
+    os << results.average_warpqueue_times.Total() << "\n";
+    return os;
+  }
+
+  friend TimingResults operator+(const TimingResults& a, const TimingResults& b) {
+    TimingResults out{};
+    out.graph_size = a.graph_size + b.graph_size;
+    out.average_diameter = a.average_diameter + b.average_diameter;
+    out.average_cpu_timer = a.average_cpu_timer + b.average_cpu_timer;
+    out.average_parallel_cpu_timer = a.average_parallel_cpu_timer + b.average_parallel_cpu_timer;
+    out.average_openacc_timer = a.average_openacc_timer + b.average_openacc_timer;
+    out.average_regular_bfs_times = a.average_regular_bfs_times + b.average_regular_bfs_times;
+    out.average_unified_bfs_times = a.average_unified_bfs_times + b.average_unified_bfs_times;
+    out.average_warpqueue_times = a.average_warpqueue_times + b.average_warpqueue_times;
+    return out;
+  }
+
+  TimingResults& operator+=(const TimingResults& b) {
+    this->graph_size += b.graph_size;
+    this->average_diameter += b.average_diameter;
+    this->average_cpu_timer += b.average_cpu_timer;
+    this->average_parallel_cpu_timer += b.average_parallel_cpu_timer;
+    this->average_openacc_timer += b.average_openacc_timer;
+    this->average_regular_bfs_times += b.average_regular_bfs_times;
+    this->average_unified_bfs_times += b.average_unified_bfs_times;
+    this->average_warpqueue_times += b.average_warpqueue_times;
+    return *this;
+  }
+
+  friend TimingResults operator/(const TimingResults& a, float b) {
+    TimingResults out{};
+    out.graph_size = a.graph_size / b;
+    out.average_diameter = a.average_diameter / b;
+    out.average_cpu_timer = a.average_cpu_timer / b;
+    out.average_parallel_cpu_timer = a.average_parallel_cpu_timer / b;
+    out.average_openacc_timer = a.average_openacc_timer / b;
+    out.average_regular_bfs_times = a.average_regular_bfs_times / b;
+    out.average_unified_bfs_times = a.average_unified_bfs_times / b;
+    out.average_warpqueue_times = a.average_warpqueue_times / b;
+    return out;
+  }
+
+  TimingResults& operator/=(float b) {
+    this->graph_size /= b;
+    this->average_diameter /= b;
+    this->average_cpu_timer /= b;
+    this->average_parallel_cpu_timer /= b;
+    this->average_openacc_timer /= b;
+    this->average_regular_bfs_times /= b;
+    this->average_unified_bfs_times /= b;
+    this->average_warpqueue_times /= b;
+    return *this;
+  }
+};
+
+TimingResults RunTimingTest(std::size_t iterations, std::size_t graph_size, float average_diameter, float diameter_deviation, bool write_dot=false) {
+  TimingResults results{};
   std::cout << "Generating graph" << std::endl;
   Graph graph = RandomGraphWithDiameter(graph_size, average_diameter, diameter_deviation);
   Graph::index_type source = 0;
+  results.graph_size = graph.NumNodes();
+  results.average_diameter = graph.AverageDiameter();
 
   std::cout << "Running Sequential BFS" << std::endl;
-  TimingWrapper average_cpu_timer{};
   std::vector<int> distances;
   for (std::size_t i = 0; i < iterations; i++) {
     TimingWrapper cpu_timer{};
     distances = cpu_timer.Run(BFS_sequential, graph, source);
     std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    average_cpu_timer += cpu_timer;
+    results.average_cpu_timer += cpu_timer;
   }
-  average_cpu_timer /= static_cast<float>(iterations);
+  results.average_cpu_timer /= static_cast<float>(iterations);
+  std::cout << "Running faster tests!" << std::endl;
 
-  {
+  if (write_dot) {
     std::cout << "Writing dot file" << std::endl;
     std::ofstream dot_stream("test.dot");
     graph.ConvertForDot(dot_stream, distances);
@@ -140,50 +219,62 @@ int main(int argc, char** argv) {
     }
   }
 
-  TimingWrapper average_parallel_cpu_timer{};
   std::vector<int> parallel_distances;
-  std::cout << "Running Parallel CPU BFS" << std::endl;
   for (std::size_t i = 0; i < iterations; i++) {
     TimingWrapper parallel_cpu_timer{};
     parallel_distances = parallel_cpu_timer.Run(BFS_ParallelCPU, graph, source);
     assert(std::equal(distances.begin(), distances.end(), parallel_distances.begin()));
     std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    average_parallel_cpu_timer += parallel_cpu_timer;
+    results.average_parallel_cpu_timer += parallel_cpu_timer;
   }
-  average_parallel_cpu_timer /= static_cast<float>(iterations);
+  results.average_parallel_cpu_timer /= static_cast<float>(iterations);
 
   #ifdef ENABLE_OPENACC
-  std::cout << "Running OpenACC BFS" << std::endl;
-  TimingWrapper average_openacc_timer{};
   for (std::size_t i = 0; i < iterations; i++) {
     TimingWrapper openacc_timer{};
     std::vector<int> openacc_distances = openacc_timer.Run(BFS_OpenACC, graph, source);
     assert(std::equal(distances.begin(), distances.end(), openacc_distances.begin()));
     std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    average_openacc_timer += openacc_timer;
+    results.average_openacc_timer += openacc_timer;
   }
-  average_openacc_timer /= static_cast<float>(iterations);
+  results.average_openacc_timer /= static_cast<float>(iterations);
   #endif
 
-  std::cout << "Running Cuda BFS" << std::endl;
   std::vector<int> gpu_bfs_distances(graph.NumNodes());
-  CudaTimers average_regular_bfs_times = TimeDeviceBFS(iterations, graph, source, gpu_bfs_distances);
+  results.average_regular_bfs_times = TimeDeviceBFS(iterations, graph, source, gpu_bfs_distances);
   assert(std::equal(distances.begin(), distances.end(), gpu_bfs_distances.begin()));
 
-  std::cout << "Running Unified Memory BFS" << std::endl;
   std::vector<int> unified_bfs_distances(graph.NumNodes());
-  CudaTimers average_unified_bfs_times = TimeUnifiedBFS(iterations, graph, source, unified_bfs_distances);
+  results.average_unified_bfs_times = TimeUnifiedBFS(iterations, graph, source, unified_bfs_distances);
   assert(std::equal(distances.begin(), distances.end(), unified_bfs_distances.begin()));
 
   std::vector<int> warpqueue_distances(graph.NumNodes());
-  CudaTimers average_warpqueue_times = TimeDeviceBFS(iterations, graph, source, warpqueue_distances);
+  results.average_warpqueue_times = TimeDeviceBFS(iterations, graph, source, warpqueue_distances);
   assert(std::equal(distances.begin(), distances.end(), warpqueue_distances.begin()));
 
-  std::cout << "Graph of size: " << graph.NumNodes() << " with average diameter: " << graph.AverageDiameter() << std::endl;
-  std::cout << "CPU time: " << average_cpu_timer << std::endl;
-  std::cout << "Parallel CPU time: " << average_parallel_cpu_timer << std::endl;
-  std::cout << "OpenACC time: " << average_openacc_timer << std::endl;
-  std::cout << "Simple GPU time: " << average_regular_bfs_times << std::endl;
-  std::cout << "Unified GPU time: " << average_unified_bfs_times << std::endl;
-  std::cout << "Warp Queue GPU time: " << average_warpqueue_times << std::endl;
+  return results;
+}
+
+int main(int argc, char** argv) {
+  std::size_t number_of_graphs = 4;
+  std::size_t iterations = 25;
+
+  std::ofstream csv_file("Timing_results.csv");
+  assert(csv_file.is_open());
+  TimingResults::Header(csv_file);
+  csv_file << std::flush;
+  for (std::size_t graph_size = 16; graph_size < 1000000; graph_size *= 4) {
+    for (std::size_t d = 0; d < 4; d++) {
+      float average_diameter = 2.0f * d + 1.0f;
+      float diameter_deviation = average_diameter / 2.0f;
+      TimingResults average_results{};
+      for (std::size_t i = 0; i < number_of_graphs; i++) {
+        average_results += RunTimingTest(iterations, graph_size, average_diameter, diameter_deviation);
+      }
+      average_results /= static_cast<float>(number_of_graphs);
+      TimingResults::Header(std::cout);
+      std::cout << average_results << std::endl;
+      csv_file << average_results << std::flush;
+    }
+  }
 }

@@ -91,9 +91,14 @@ struct CudaTimers {
   TimingWrapper execution;
   TimingWrapper download;
 
+  [[nodiscard]] TimingWrapper Total() const {
+    TimingWrapper out{};
+    out.elapsed = this->upload.elapsed + this->execution.elapsed + this->download.elapsed;
+    return out;
+  }
+
   friend std::ostream& operator<<(std::ostream& os, const CudaTimers& timer) {
-    std::chrono::duration<float, std::milli> total = timer.upload.elapsed + timer.execution.elapsed + timer.download.elapsed;
-    os << "Total: " << total.count() << "ms [Upload: " << timer.upload << " Execution: "
+    os << "Total: " << timer.Total() << " [Upload: " << timer.upload << " Execution: "
         << timer.execution << " Download: " << timer.download << "]";
     return os;
   }
