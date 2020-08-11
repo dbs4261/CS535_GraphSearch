@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define BLOCK_QUEUE_SIZE 16
-#define BLOCK_SIZE 8.0
+#define BLOCK_SIZE 512
 #define NUM_SUB_QUEUE 4
 	
 //#define CudaCatchError(call) { \

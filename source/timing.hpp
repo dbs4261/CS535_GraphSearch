@@ -62,6 +62,28 @@ struct TimingWrapper {
     os << timer.elapsed.count() << "ms";
     return os;
   }
+
+  friend TimingWrapper operator+(const TimingWrapper& a, const TimingWrapper& b) {
+    TimingWrapper out;
+    out.elapsed = a.elapsed + b.elapsed;
+    return out;
+  }
+
+  TimingWrapper& operator+=(const TimingWrapper& b) {
+    this->elapsed += b.elapsed;
+    return *this;
+  }
+
+  friend TimingWrapper operator/(const TimingWrapper& a, float b) {
+    TimingWrapper out;
+    out.elapsed = a.elapsed / b;
+    return out;
+  }
+
+  TimingWrapper& operator/=(float b) {
+    this->elapsed /= b;
+    return *this;
+  }
 };
 
 struct CudaTimers {
@@ -74,6 +96,36 @@ struct CudaTimers {
     os << "Total: " << total.count() << "ms [Upload: " << timer.upload << " Execution: "
         << timer.execution << " Download: " << timer.download << "]";
     return os;
+  }
+
+  friend CudaTimers operator+(const CudaTimers& a, const CudaTimers& b) {
+    CudaTimers out;
+    out.upload = a.upload + b.upload;
+    out.execution = a.execution + b.execution;
+    out.download = a.download + b.download;
+    return out;
+  }
+
+  CudaTimers& operator+=(const CudaTimers& b) {
+    this->upload += b.upload;
+    this->execution += b.execution;
+    this->download += b.download;
+    return *this;
+  }
+
+  friend CudaTimers operator/(const CudaTimers& a, float b) {
+    CudaTimers out;
+    out.upload = a.upload / b;
+    out.execution = a.execution / b;
+    out.download = a.download / b;
+    return out;
+  }
+
+  CudaTimers& operator/=(float b) {
+    this->upload /= b;
+    this->execution /= b;
+    this->download /= b;
+    return *this;
   }
 };
 
