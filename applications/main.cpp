@@ -13,6 +13,7 @@
 #include "source/allocate_for_cuda_bfs.h"
 #include "source/cuda_regular_bfs.h"
 #include "source/timing.hpp"
+#include "source/warp_queue_bfs.h"
 
 #ifdef ENABLE_OPENACC
 #include "source/bfs_openacc.hpp"
@@ -58,6 +59,26 @@ CudaTimers TimeUnifiedBFS(const Graph& graph, Graph::index_type source, std::vec
   return out;
 }
 
+CudaTimers TimeWarpQueueBFS(const Graph& graph, Graph::index_type source, std::vector<int>& distances) {
+  int* device_edges = nullptr;
+  int* device_dests = nullptr;
+  int* device_labels = nullptr;
+  int* device_visited = nullptr;
+  int* current_frontier = nullptr;
+  int* current_frontier_tail = nullptr;
+  int* previous_frontier = nullptr;
+  int* previous_frontier_tail = nullptr;
+  CudaTimers out{};
+  out.upload.Run(AllocateAndCopyFor_device_BFS, graph.NumNodes(), graph.NumEdges() * 2, source,
+      graph.matrix.row_indices.data(), graph.matrix.column_indices.data(), &device_edges,
+      &device_dests, &device_labels, &device_visited, &current_frontier,
+      &current_frontier_tail, &previous_frontier, &previous_frontier_tail);
+  out.execution.Run(LaunchWarpQueueBFS_host, graph.NumNodes(), device_edges, device_dests, device_labels, device_visited, current_frontier_tail, current_frontier, previous_frontier_tail, previous_frontier);
+  distances.resize(graph.NumNodes());
+  out.download.Run(DeallocateFrom_device_BFS, graph.NumNodes(), distances.data(), device_edges, device_dests, device_labels, device_visited, current_frontier, current_frontier_tail, previous_frontier, previous_frontier_tail);
+  return out;
+}
+
 int main(int argc, char** argv) {
   std::size_t graph_size = 500000;
   float average_diameter = 1.2f;
@@ -97,9 +118,14 @@ int main(int argc, char** argv) {
   CudaTimers unified_bfs_times = TimeUnifiedBFS(graph, source, unified_bfs_distances);
   assert(std::equal(distances.begin(), distances.end(), unified_bfs_distances.begin()));
 
+  std::vector<int> warpqueue_distances(graph.NumNodes());
+  CudaTimers warpqueue_times = TimeDeviceBFS(graph, source, warpqueue_distances);
+  assert(std::equal(distances.begin(), distances.end(), warpqueue_distances.begin()));
+
   std::cout << "Graph of size: " << graph_size << " with average diameter: " << average_diameter << std::endl;
   std::cout << "CPU time: " << cpu_timer << std::endl;
   std::cout << "OpenACC time: " << openacc_timer << std::endl;
   std::cout << "Simple GPU time: " << regular_bfs_times << std::endl;
   std::cout << "Unified GPU time: " << unified_bfs_times << std::endl;
+  std::cout << "Unified GPU time: " << warpqueue_times << std::endl;
 }
