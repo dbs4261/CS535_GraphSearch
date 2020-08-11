@@ -5,6 +5,7 @@
 #include "graph_utilities.hpp"
 
 #include <cassert>
+#include <iostream>
 #include <random>
 
 Graph RandomGraph(std::size_t num_nodes, std::size_t num_edges) {
@@ -33,10 +34,12 @@ Graph RandomGraphWithDiameter(std::size_t num_nodes, float average_numer_of_edge
   for (std::size_t i = 0; i < num_nodes; i++) {
     for (std::size_t j = 0; j < (std::size_t)std::ceil(diameter_distirbution(generator)); j++) {
       bool added_successfully;
+      bool fully_connected;
       do {
         // Add edge will return false if the two random numbers are the same or are already connected.
         added_successfully = graph.AddEdge(i, node_distirbution(generator));
-      } while (not added_successfully);
+        fully_connected = (graph.matrix.row_indices.at(i + 1) - graph.matrix.row_indices.at(i) >= num_nodes - 1);
+      } while (not added_successfully and not fully_connected);
     }
   }
   // Call resize to make sure the edge list is large enough so accessing any node wont go out of range.

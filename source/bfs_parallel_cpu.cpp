@@ -81,7 +81,6 @@ class ThreadPool {
     std::future<std::invoke_result_t<Function, Args...>> result = task->get_future();
     {
       std::lock_guard<std::mutex> lock(queue_mutex);
-      assert(not stopped);
       task_queue.emplace([task](){(*task)();});
     }
     condition.notify_one();
