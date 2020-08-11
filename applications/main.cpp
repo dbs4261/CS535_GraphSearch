@@ -15,6 +15,7 @@
 #include "source/cuda_regular_bfs.h"
 #include "source/timing.hpp"
 #include "source/warp_queue_bfs.h"
+#include "source/bfs_parallel_cpu.hpp"
 
 #ifdef ENABLE_OPENACC
 #include "source/bfs_openacc.hpp"
@@ -108,10 +109,10 @@ CudaTimers TimeWarpQueueBFS(std::size_t iterations, const Graph& graph, Graph::i
 }
 
 int main(int argc, char** argv) {
-  std::size_t graph_size = 100;
+  std::size_t graph_size = 20;
   std::size_t iterations = 25;
-  float average_diameter = 1.2f;
-  float diameter_deviation = 0.5f;
+  float average_diameter = 2.0f;
+  float diameter_deviation = 1.0f;
   std::cout << "Generating graph" << std::endl;
   Graph graph = RandomGraphWithDiameter(graph_size, average_diameter, diameter_deviation);
   Graph::index_type source = 0;
@@ -138,6 +139,18 @@ int main(int argc, char** argv) {
       std::cout << "Graph is too big to print (size: " << graph_size << ")" << std::endl;
     }
   }
+
+  TimingWrapper average_parallel_cpu_timer{};
+  std::vector<int> parallel_distances;
+  std::cout << "Running Parallel CPU BFS" << std::endl;
+  for (std::size_t i = 0; i < iterations; i++) {
+    TimingWrapper parallel_cpu_timer{};
+    parallel_distances = parallel_cpu_timer.Run(BFS_ParallelCPU, graph, source);
+    assert(std::equal(distances.begin(), distances.end(), parallel_distances.begin()));
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    average_parallel_cpu_timer += parallel_cpu_timer;
+  }
+  average_parallel_cpu_timer /= static_cast<float>(iterations);
 
   #ifdef ENABLE_OPENACC
   std::cout << "Running OpenACC BFS" << std::endl;
@@ -166,8 +179,9 @@ int main(int argc, char** argv) {
   CudaTimers average_warpqueue_times = TimeDeviceBFS(iterations, graph, source, warpqueue_distances);
   assert(std::equal(distances.begin(), distances.end(), warpqueue_distances.begin()));
 
-  std::cout << "Graph of size: " << graph_size << " with average diameter: " << average_diameter << std::endl;
+  std::cout << "Graph of size: " << graph.NumNodes() << " with average diameter: " << graph.AverageDiameter() << std::endl;
   std::cout << "CPU time: " << average_cpu_timer << std::endl;
+  std::cout << "Parallel CPU time: " << average_parallel_cpu_timer << std::endl;
   std::cout << "OpenACC time: " << average_openacc_timer << std::endl;
   std::cout << "Simple GPU time: " << average_regular_bfs_times << std::endl;
   std::cout << "Unified GPU time: " << average_unified_bfs_times << std::endl;

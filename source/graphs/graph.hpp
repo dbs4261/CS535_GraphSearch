@@ -35,6 +35,14 @@ struct Graph {
     return matrix.Height();
   }
 
+  inline float AverageDiameter() const {
+    float average = 0.0f;
+    for (std::size_t i = 0; i < matrix.Height(); i++) {
+      average += (matrix.row_indices.at(i + 1) - matrix.row_indices.at(i));
+    }
+    return average / static_cast<float>(matrix.Height());
+  }
+
   /**
    * @note It is more efficient when generating a graph to call resize last as fewer in place modifications are needed.
    * @return True if connections were lost when the graph was shrunk.

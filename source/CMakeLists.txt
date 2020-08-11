@@ -21,6 +21,8 @@ add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/timing.hpp
     ${CMAKE_CURRENT_LIST_DIR}/warp_queue_bfs.cu
     ${CMAKE_CURRENT_LIST_DIR}/warp_queue_bfs.h
+    ${CMAKE_CURRENT_LIST_DIR}/bfs_parallel_cpu.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/bfs_parallel_cpu.hpp
 )
 
 target_include_directories(BFSLibrary
@@ -50,16 +52,6 @@ if(OpenACC_CXX_FOUND)
         PUBLIC ${CMAKE_CURRENT_LIST_DIR}/bfs_openacc.cpp)
     set_source_files_properties(bfs_openacc.cpp PROPERTIES COMPILE_FLAGS ${OpenACC_CXX_FLAGS})
 endif()
-
-#if (CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
-#    message("Adding gpu parallel STL implementation")
-#    target_compile_definitions(BFSLibrary PUBLIC ENABLE_PARALLEL_STL)
-#    target_sources(BFSLibrary
-#        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/bfs_parallel_stl.hpp
-#        PUBLIC ${CMAKE_CURRENT_LIST_DIR}/bfs_parallel_stl.cpp
-#    )
-#    set_source_files_properties(bfs_parallel_stl.cpp PROPERTIES COMPILE_FLAGS -stdpar)
-#endif()
 
 add_executable(YubinBFS origin_bfs.cu allocate_for_cuda_bfs.c)
 target_include_directories(YubinBFS
