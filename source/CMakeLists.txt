@@ -14,11 +14,13 @@ add_library(BFSLibrary
     ${CMAKE_CURRENT_LIST_DIR}/graphs/coloring.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cuda_regular_bfs.cu
     ${CMAKE_CURRENT_LIST_DIR}/cuda_regular_bfs.h
-        ${CMAKE_CURRENT_LIST_DIR}/graph.c
+    ${CMAKE_CURRENT_LIST_DIR}/graph.c
     ${CMAKE_CURRENT_LIST_DIR}/graph.h
     ${CMAKE_CURRENT_LIST_DIR}/allocate_for_cuda_bfs.c
     ${CMAKE_CURRENT_LIST_DIR}/allocate_for_cuda_bfs.h
     ${CMAKE_CURRENT_LIST_DIR}/timing.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/warp_queue_bfs.cu
+    ${CMAKE_CURRENT_LIST_DIR}/warp_queue_bfs.h
 )
 
 target_include_directories(BFSLibrary

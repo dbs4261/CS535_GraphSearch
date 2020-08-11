@@ -28,7 +28,6 @@ __global__ void frontier_init_kernel(int* p_frontier_tail_d, int* c_frontier_tai
 }
 
 __global__ void frontier_tail_swap_kernel(int* p_frontier_tail_d, int* c_frontier_tail_d) {
-  
   *p_frontier_tail_d = *c_frontier_tail_d; 
   *c_frontier_tail_d = 0;
 }
@@ -79,43 +78,50 @@ __global__ void BFS_Bqueue_kernel(int* p_frontier, int* p_frontier_tail, int* c_
   __syncwarp();
 }
 
-void BFS_host(int source, int *edges, int *dest, int *label, int edges_num, int vertex_num){
-  int *edges_d, *dest_d, *label_d, *visited_d;
-  int *c_frontier_d, *p_frontier_d, *c_frontier_tail_d, *p_frontier_tail_d;
-
-  AllocateAndCopyFor_device_BFS(vertex_num, edges_num, source, edges, dest, &edges_d, &dest_d, &label_d, &visited_d, &c_frontier_d, &c_frontier_tail_d, &p_frontier_d, &p_frontier_tail_d);
-
-  int p_frontier_tail = 1;
-  while (p_frontier_tail > 0) {
-    int num_blocks = ceil(p_frontier_tail / BLOCK_SIZE);
-    BFS_Bqueue_kernel <<< num_blocks, BLOCK_SIZE >>> (p_frontier_d, p_frontier_tail_d, c_frontier_d, c_frontier_tail_d, edges_d, dest_d, label_d, visited_d);
+extern "C" void LaunchWarpQueueBFS_host(int num_nodes, int* edges, int* dests, int* labels, int* visited,
+    int *c_frontier_tail, int *c_frontier, int *p_frontier_tail, int *p_frontier) {
+  int frontier_size = 1;
+  while (frontier_size > 0) {
+    int num_blocks = ceil(frontier_size / BLOCK_SIZE);
+    BFS_Bqueue_kernel <<< num_blocks, BLOCK_SIZE >>> (p_frontier, p_frontier_tail, c_frontier, c_frontier_tail, edges, dests, labels, visited);
     CudaCatchError(cudaGetLastError());
-    CudaCatchError(cudaMemcpy(&p_frontier_tail, c_frontier_tail_d, sizeof(int), cudaMemcpyDeviceToHost));
-    int *temp = c_frontier_d; c_frontier_d = p_frontier_d; p_frontier_d = temp;
-    frontier_tail_swap_kernel <<< 1,1 >>>(p_frontier_tail_d, c_frontier_tail_d);
+    CudaCatchError(cudaMemcpy(&frontier_size, c_frontier_tail, sizeof(int), cudaMemcpyDeviceToHost));
+    int *temp = c_frontier; c_frontier = p_frontier; p_frontier = temp;
+    frontier_tail_swap_kernel<<< 1,1 >>>(p_frontier_tail, c_frontier_tail);
     CudaCatchError(cudaGetLastError());
   }
-  DeallocateFrom_device_BFS(vertex_num, label, edges_d, dest_d, label_d, visited_d, c_frontier_d, c_frontier_tail_d, p_frontier_d, p_frontier_tail_d);
 }
 
-
-
-int main(int argc, char* argv[]) {
-
-  int _edges[] = {0, 2, 4, 7, 9, 11, 12, 13, 15, 15};
-  int _dest[] = {1, 2, 3, 4, 5, 6, 7, 4, 8, 5, 8, 6, 8, 0, 6};
-  int _label[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  
-  int* edges  = _edges;
-  int* dest  = _dest;
-  int* label  = _label;
-  int source = 0;
-  int edge_num = 15;
-  int vertex_num = 9;
-  BFS_host(source, edges, dest, label, edge_num, vertex_num);
-
-  for (int i = 0; i < 9; i++) {
-	printf("%d ", label[i]);
-  }
-  return EXIT_SUCCESS;
+extern "C" void Run_WarpQueue_BFS(int num_nodes, int num_edges, int source, int* host_edges, int* host_dests, int* host_labels) {
+  int* device_edges = nullptr;
+  int* device_dests = nullptr;
+  int* device_labels = nullptr;
+  int* device_visited = nullptr;
+  int* current_frontier = nullptr;
+  int* current_frontier_tail = nullptr;
+  int* previous_frontier = nullptr;
+  int* previous_frontier_tail = nullptr;
+  AllocateAndCopyFor_device_BFS(num_nodes, num_edges, source, host_edges, host_dests, &device_edges, &device_dests, &device_labels, &device_visited, &current_frontier, &current_frontier_tail, &previous_frontier, &previous_frontier_tail);
+  LaunchWarpQueueBFS_host(num_nodes, device_edges, device_dests, device_labels, device_visited, current_frontier_tail, current_frontier, previous_frontier_tail, previous_frontier);
+  DeallocateFrom_device_BFS(num_nodes, host_labels, device_edges, device_dests, device_labels, device_visited, current_frontier, current_frontier_tail, previous_frontier, previous_frontier_tail);
 }
+
+//int main(int argc, char* argv[]) {
+//
+//  int _edges[] = {0, 2, 4, 7, 9, 11, 12, 13, 15, 15};
+//  int _dest[] = {1, 2, 3, 4, 5, 6, 7, 4, 8, 5, 8, 6, 8, 0, 6};
+//  int _label[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+//
+//  int* edges  = _edges;
+//  int* dest  = _dest;
+//  int* label  = _label;
+//  int source = 0;
+//  int edge_num = 15;
+//  int vertex_num = 9;
+//  Run_WarpQueue_BFS(edge_num, vertex_num, source, edges, dest, label);
+//
+//  for (int i = 0; i < 9; i++) {
+//	printf("%d ", label[i]);
+//  }
+//  return EXIT_SUCCESS;
+//}
